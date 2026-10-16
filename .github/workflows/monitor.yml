@@ -4,6 +4,7 @@ name: Monitor Reservix bookings
 on:
   schedule:
     - cron: '*/13 * * * *'
+      timezone: 'Europe/Berlin'
   workflow_dispatch:
 
 permissions:
