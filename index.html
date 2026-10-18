@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="de">
 <head>
@@ -6,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#05090d">
 
-<title>Kommende Theaterstücke</title>
+<title>Theater Tickets</title>
 
 <style>
 :root {
   color-scheme: dark;
   --bg: #05090d;
-  --panel: #0a1119;
+  --card: #0a1119;
   --line: #233244;
   --muted: #8ca2ba;
   --text: #f1f6fc;
@@ -26,160 +25,171 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", monospace;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 main {
-  max-width: 1100px;
+  width: 100%;
+  max-width: 760px;
   margin: 0 auto;
-  padding: clamp(18px, 4vw, 44px);
+  padding: 32px 20px;
 }
 
 header {
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 
 .brand {
-  font-size: clamp(25px, 4vw, 40px);
+  font-size: clamp(23px, 5vw, 30px);
   font-weight: 800;
-  letter-spacing: .06em;
-  line-height: 1.2;
+  letter-spacing: -.04em;
 }
 
 .subtitle {
-  margin-top: 10px;
-  color: var(--muted);
-  font-size: 12px;
-  letter-spacing: .12em;
-}
-
-.table-head,
-.event {
-  display: grid;
-  grid-template-columns: 1.15fr 1.6fr .7fr .8fr;
-  gap: 18px;
-  align-items: center;
-}
-
-.table-head {
+  margin-top: 5px;
   color: var(--muted);
   font-size: 11px;
-  letter-spacing: .1em;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
+  letter-spacing: .13em;
+}
+
+#events {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .event {
-  padding: 22px 14px;
-  border-bottom: 1px solid var(--line);
+  min-width: 0;
+  padding: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.event-top,
+.event-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .date {
-  font-size: 15px;
+  color: var(--green);
+  font-size: 11px;
   font-weight: 700;
-  line-height: 1.5;
+  letter-spacing: .045em;
 }
 
-.small {
+.time {
   color: var(--muted);
   font-size: 12px;
-  margin-top: 5px;
-}
-
-.title {
-  font-size: 16px;
-  font-weight: 750;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.sold {
-  font-size: 25px;
-  font-weight: 800;
-}
-
-.status {
-  display: inline-block;
-  border: 1px solid var(--green);
-  color: var(--green);
-  padding: 6px 9px;
-  font-size: 11px;
-  letter-spacing: .04em;
   white-space: nowrap;
 }
 
-.status.warning {
+.title {
+  margin: 13px 0 18px;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.event-bottom {
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.sold {
+  color: var(--muted);
+}
+
+.remaining {
+  color: var(--green);
+  font-weight: 650;
+}
+
+.remaining.warning {
   color: var(--amber);
-  border-color: var(--amber);
+}
+
+.remaining.full {
+  color: #ff7272;
 }
 
 .bar {
   width: 100%;
-  height: 5px;
-  margin-top: 10px;
-  background: var(--line);
+  height: 4px;
+  margin-top: 13px;
   overflow: hidden;
+  background: var(--line);
+  border-radius: 99px;
 }
 
 .bar span {
   display: block;
   height: 100%;
   background: var(--green);
+  border-radius: inherit;
 }
 
 .bar span.warning {
   background: var(--amber);
 }
 
+.bar span.full {
+  background: #ff7272;
+}
+
 .empty,
 .error {
+  padding: 20px;
   color: var(--muted);
-  padding: 28px 14px;
-  border-bottom: 1px solid var(--line);
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.6;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
 }
 
 .error {
   color: var(--amber);
 }
 
-@media (max-width: 650px) {
-  .table-head {
-    display: none;
+footer {
+  padding: 20px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  main {
+    padding: 24px 14px;
+  }
+
+  header {
+    margin-bottom: 20px;
   }
 
   .event {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-    padding: 20px 4px;
+    padding: 15px;
+    border-radius: 10px;
   }
 
-  .dateblock {
-    grid-column: 1;
+  .title {
+    font-size: 17px;
+    margin: 12px 0 16px;
   }
 
-  .eventname {
-    grid-column: 1;
-  }
-
-  .sales {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    text-align: right;
-    min-width: 90px;
-  }
-
-  .statusblock {
-    grid-column: 1 / -1;
-  }
-
-  .bar {
-    max-width: 260px;
+  .event-bottom {
+    font-size: 11px;
+    gap: 8px;
   }
 }
 </style>
@@ -187,23 +197,16 @@ header {
 
 <body>
 <main>
-
   <header>
-    <div class="brand">TICKETS</div>
-    <div class="subtitle">Henrik - Hacker</div>
+    <div class="brand">THEATER TICKETS</div>
+    <div class="subtitle">KOMMENDE VORSTELLUNGEN</div>
   </header>
-
-  <div class="table-head">
-    <div>DATUM / UHRZEIT</div>
-    <div>VERANSTALTUNG</div>
-    <div>VERKAUFT</div>
-    <div>STATUS</div>
-  </div>
 
   <section id="events" aria-live="polite">
     <div class="empty">Vorstellungen werden geladen …</div>
   </section>
 
+  <footer>Automatische Aktualisierung alle 5 Minuten</footer>
 </main>
 
 <script>
@@ -213,46 +216,27 @@ const DATA_URL =
   "https://raw.githubusercontent.com/TNNSLAB/termine/main/state.json";
 
 const REFRESH_MS = 5 * 60 * 1000;
-
-// Tatsächliche Kapazität pro Vorstellung eintragen.
 const CAPACITY = 150;
 
 const $ = id => document.getElementById(id);
+const MONTHS = {
+  jan: 0, januar: 0,
+  feb: 1, februar: 1,
+  mär: 2, märz: 2, mrz: 2,
+  apr: 3, april: 3,
+  mai: 4,
+  jun: 5, juni: 5,
+  jul: 6, juli: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  okt: 9, oktober: 9,
+  nov: 10, november: 10,
+  dez: 11, dezember: 11
+};
 
 let isLoading = false;
 
-const MONTHS = {
-  jan: 0,
-  januar: 0,
-  feb: 1,
-  februar: 1,
-  mär: 2,
-  märz: 2,
-  mrz: 2,
-  apr: 3,
-  april: 3,
-  mai: 4,
-  jun: 5,
-  juni: 5,
-  jul: 6,
-  juli: 6,
-  aug: 7,
-  august: 7,
-  sep: 8,
-  sept: 8,
-  september: 8,
-  okt: 9,
-  oktober: 9,
-  nov: 10,
-  november: 10,
-  dez: 11,
-  dezember: 11
-};
-
 function parseEvent(key, sold) {
-  // Erwartetes Format:
-  // 123456-Napoleons Spion Sa., 24. Okt. 2026 20:00 Uhr
-
   const idMatch = key.match(/^(\d+)-(.+)$/);
   const id = idMatch ? idMatch[1] : "";
   const rawTitle = idMatch ? idMatch[2] : key;
@@ -260,25 +244,24 @@ function parseEvent(key, sold) {
   const pattern =
     /^(.*?)\s+(?:Mo|Di|Mi|Do|Fr|Sa|So)\.?,?\s*(\d{1,2})\.\s+([A-Za-zÄÖÜäöü]+)\.?\s+(\d{4})\s+(\d{1,2}):(\d{2})\s*Uhr$/i;
 
-  const match = rawTitle.trim().match(pattern);
+  const m = rawTitle.trim().match(pattern);
 
   let title = rawTitle;
   let dateLabel = "";
-  let timeLabel = "";
   let dateValue = null;
+  let timeLabel = "";
 
-  if (match) {
-    title = match[1].trim();
+  if (m) {
+    title = m[1].trim();
 
-    const day = Number(match[2]);
-    const monthName = match[3]
+    const day = Number(m[2]);
+    const monthName = m[3]
       .replace(/\.$/, "")
       .toLocaleLowerCase("de-DE");
 
-    const year = Number(match[4]);
-    const hours = Number(match[5]);
-    const minutes = Number(match[6]);
-
+    const year = Number(m[4]);
+    const hours = Number(m[5]);
+    const minutes = Number(m[6]);
     const month = MONTHS[monthName];
 
     const labelMatch = rawTitle.match(
@@ -303,7 +286,6 @@ function parseEvent(key, sold) {
         year, month, day, hours, minutes
       );
 
-      // Ungültige Kalenderdaten nicht übernehmen.
       if (
         parsed.getFullYear() === year &&
         parsed.getMonth() === month &&
@@ -314,7 +296,7 @@ function parseEvent(key, sold) {
     }
   }
 
-  const soldNumber = Number(sold);
+  const n = Number(sold);
 
   return {
     id,
@@ -322,46 +304,36 @@ function parseEvent(key, sold) {
     dateLabel,
     timeLabel,
     dateValue,
-    sold: Number.isFinite(soldNumber)
-      ? Math.max(0, soldNumber)
-      : 0
+    sold: Number.isFinite(n) ? Math.max(0, n) : 0
   };
 }
 
 function esc(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
+  return String(value).replace(/[&<>"']/g, c => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#39;"
-  })[char]);
+  })[c]);
 }
 
 function render(data) {
-  if (
-    !data ||
-    typeof data !== "object" ||
-    Array.isArray(data)
-  ) {
-    throw new Error("Ungültiges JSON-Datenformat");
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error("Ungültiges Datenformat");
   }
 
   const now = new Date();
 
-  // Nur Vorstellungen in der Zukunft anzeigen.
-  // Ungültige oder nicht erkannte Termine werden ausgelassen.
   const events = Object.entries(data)
     .map(([key, value]) => parseEvent(key, value))
     .filter(event =>
       event.dateValue !== null &&
       event.dateValue.getTime() > now.getTime()
     )
-    .sort((a, b) =>
-      a.dateValue.getTime() - b.dateValue.getTime()
-    );
+    .sort((a, b) => a.dateValue - b.dateValue);
 
-  if (events.length === 0) {
+  if (!events.length) {
     $("events").innerHTML = `
       <div class="empty">
         Aktuell sind keine kommenden Vorstellungen verfügbar.
@@ -371,73 +343,60 @@ function render(data) {
   }
 
   $("events").innerHTML = events.map(event => {
-    const cap = CAPACITY > 0 ? CAPACITY : 0;
-
-    const remaining = cap
-      ? Math.max(0, cap - event.sold)
+    const remaining = CAPACITY > 0
+      ? Math.max(0, CAPACITY - event.sold)
       : null;
 
-    const pct = cap
-      ? Math.min(100, Math.round(event.sold / cap * 100))
+    const pct = CAPACITY > 0
+      ? Math.min(100, Math.round(event.sold / CAPACITY * 100))
       : null;
 
+    const full = remaining === 0;
     const warning = pct !== null && pct >= 75;
+    const stateClass = full ? "full" : warning ? "warning" : "";
 
-    let status;
+    let availability = "Kapazität unbekannt";
 
-    if (remaining === null) {
-      status = "KAPAZITÄT UNBEKANNT";
-    } else if (remaining === 0) {
-      status = "AUSVERKAUFT";
-    } else {
-      status = `${remaining.toLocaleString("de-DE")} FREI`;
+    if (remaining !== null) {
+      availability = full
+        ? "Ausverkauft"
+        : `${remaining.toLocaleString("de-DE")} verfügbar`;
     }
 
     return `
       <article class="event">
-
-        <div class="dateblock">
-          <div class="date">${esc(event.dateLabel)}</div>
-          <div class="small">${esc(event.timeLabel)} Uhr</div>
+        <div class="event-top">
+          <div class="date">${esc(event.dateLabel || "Termin")}</div>
+          <div class="time">${esc(event.timeLabel)} Uhr</div>
         </div>
 
-        <div class="eventname">
-          <div class="title">${esc(event.title)}</div>
-          <div class="small">ID ${esc(event.id || "—")}</div>
-        </div>
+        <div class="title">${esc(event.title)}</div>
 
-        <div class="sales">
+        <div class="event-bottom">
           <div class="sold">
-            ${event.sold.toLocaleString("de-DE")}
+            Verkauft: ${event.sold.toLocaleString("de-DE")}${CAPACITY > 0 ? " / " + CAPACITY : ""}
           </div>
 
-          <div class="small">
-            Tickets verkauft${cap ? " / " + cap : ""}
-          </div>
-
-          ${pct !== null ? `
-            <div class="bar">
-              <span
-                class="${warning ? "warning" : ""}"
-                style="width:${pct}%"
-              ></span>
-            </div>
-            <div class="small">${pct}% verkauft</div>
-          ` : ""}
-        </div>
-
-        <div class="statusblock">
-          <span class="status ${warning ? "warning" : ""}">
-            ${esc(status)}
-          </span>
-
-          <div class="small">
-            ${remaining !== null
-              ? remaining.toLocaleString("de-DE") + " verfügbar"
-              : "Verfügbarkeit unbekannt"}
+          <div class="remaining ${stateClass}">
+            ${esc(availability)}
           </div>
         </div>
 
+        ${pct !== null ? `
+          <div
+            class="bar"
+            role="progressbar"
+            aria-label="Verkaufsfortschritt"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="${pct}"
+          >
+            <span
+              class="${stateClass}"
+              style="width:${pct}%"
+            ></span>
+          </div>
+        ` : ""}
       </article>
     `;
   }).join("");
@@ -445,7 +404,6 @@ function render(data) {
 
 async function load() {
   if (isLoading) return;
-
   isLoading = true;
 
   try {
@@ -459,19 +417,16 @@ async function load() {
     }
 
     const data = await response.json();
-
     render(data);
 
   } catch (error) {
-    console.error("Fehler beim Laden der Vorstellungen:", error);
+    console.error("Fehler beim Laden:", error);
 
-    // Bereits geladene Termine stehen bei Netzwerkfehlern
-    // weiterhin auf der Seite.
     if (!$("events").querySelector(".event")) {
       $("events").innerHTML = `
         <div class="error">
-          Die Vorstellungen konnten nicht geladen werden.
-          Bitte überprüfe deine Internetverbindung.
+          Vorstellungen konnten nicht geladen werden.
+          Bitte Internetverbindung prüfen.
         </div>
       `;
     }
@@ -480,10 +435,8 @@ async function load() {
   }
 }
 
-// Beim Öffnen laden und danach alle fünf Minuten aktualisieren.
 load();
 setInterval(load, REFRESH_MS);
 </script>
-
 </body>
 </html>
