@@ -205,8 +205,6 @@ footer {
   <section id="events" aria-live="polite">
     <div class="empty">Vorstellungen werden geladen …</div>
   </section>
-
-  <footer>Automatische Aktualisierung alle 5 Minuten</footer>
 </main>
 
 <script>
@@ -215,7 +213,6 @@ footer {
 const DATA_URL =
   "https://raw.githubusercontent.com/TNNSLAB/termine/main/state.json";
 
-const REFRESH_MS = 5 * 60 * 1000;
 const CAPACITY = 150;
 
 const $ = id => document.getElementById(id);
@@ -436,7 +433,6 @@ async function load() {
 }
 
 load();
-setInterval(load, REFRESH_MS);
 </script>
 </body>
 </html>
