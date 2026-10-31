@@ -13,13 +13,16 @@ CONFIG_PATH = Path("events.json")
 STATE_PATH = Path("state.json")
 TIMEZONE = ZoneInfo("Europe/Berlin")
 
+MAX_EVENTS_TO_MONITOR = 2
+
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/130.0.0.0 Safari/537.36"
     ),
     "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
 }
@@ -41,8 +44,11 @@ def telegram_send(message: str) -> None:
     response.raise_for_status()
 
     payload = response.json()
+
     if not payload.get("ok"):
-        raise RuntimeError(f"Telegram API returned an error: {payload}")
+        raise RuntimeError(
+            f"Telegram API returned an error: {payload}"
+        )
 
 
 def read_json(path: Path, default):
@@ -55,18 +61,13 @@ def read_json(path: Path, default):
 
 
 def get_event_datetime(event: dict) -> datetime:
-    """
-    Determine an event's local date and time.
-
-    Reads the date from the 'date' field and, if available,
-    the time from a title such as '18:00 Uhr'.
-    Events without a recognizable time default to midnight.
-    """
+    """Determine an event's local date and time."""
     event_date = datetime.strptime(
         event["date"], "%Y-%m-%d"
     ).date()
 
     title = event.get("title", "")
+
     match = re.search(
         r"\b(\d{1,2}):(\d{2})\s*Uhr\b",
         title,
@@ -88,13 +89,8 @@ def get_event_datetime(event: dict) -> datetime:
     )
 
 
-def get_next_event(events):
-    """
-    Return only the next upcoming event.
-
-    Events are ordered by their date and, when available,
-    the time in their title.
-    """
+def get_upcoming_events(events):
+    """Return the next configured upcoming events."""
     now = datetime.now(TIMEZONE)
     upcoming = []
 
@@ -113,33 +109,33 @@ def get_next_event(events):
         if event_datetime >= now:
             upcoming.append((event_datetime, event))
 
-    if not upcoming:
-        return None
+    upcoming.sort(key=lambda item: item[0])
 
-    return min(upcoming, key=lambda item: item[0])[1]
+    return [
+        event
+        for _, event in upcoming[:MAX_EVENTS_TO_MONITOR]
+    ]
 
 
 def get_booked_count(event: dict) -> int:
     """
-    Retrieve the seating map and count seats where free is False.
+    Count unavailable seats according to Reservix.
 
-    This represents unavailable seats according to the endpoint's
-    response, which may not always mean confirmed purchases.
+    Unavailable does not necessarily mean confirmed purchases.
     """
     event_id = str(event["event_id"]).removeprefix("e")
     map_id = str(event["map_id"])
+
     event_url = event.get("event_url") or event.get("url")
 
     if not event_url:
         raise RuntimeError(
-            f"Missing event URL for event {event_id}: "
-            f"{event.get('title', 'Unknown event')}"
+            f"Missing event URL for event {event_id}"
         )
 
     session = requests.Session()
     session.headers.update(HEADERS)
 
-    # Visit the event page first to establish a session.
     page = session.get(event_url, timeout=25)
     page.raise_for_status()
 
@@ -156,34 +152,40 @@ def get_booked_count(event: dict) -> int:
         },
         timeout=25,
     )
+
     response.raise_for_status()
 
     try:
         payload = response.json()
     except ValueError as exc:
         raise RuntimeError(
-            f"Seating-map endpoint returned invalid JSON "
-            f"for event {event_id}."
+            f"Invalid seating-map JSON for event {event_id}"
         ) from exc
 
     seats = payload.get("data")
 
     if not isinstance(seats, list):
         raise RuntimeError(
-            f"Unexpected seating-map response for event {event_id}: "
-            "expected a 'data' list."
+            f"Unexpected seating-map response for event {event_id}"
         )
 
     return sum(
-        1 for seat in seats
-        if isinstance(seat, dict) and seat.get("free") is False
+        1
+        for seat in seats
+        if isinstance(seat, dict)
+        and seat.get("free") is False
     )
 
 
 def save_state(state: dict) -> None:
-    """Write state.json in a readable format."""
+    """Save state.json in a readable format."""
     with STATE_PATH.open("w", encoding="utf-8") as file:
-        json.dump(state, file, ensure_ascii=False, indent=2)
+        json.dump(
+            state,
+            file,
+            ensure_ascii=False,
+            indent=2,
+        )
         file.write("\n")
 
 
@@ -193,7 +195,7 @@ def main():
 
     if not isinstance(config, list) or not config:
         raise RuntimeError(
-            "events.json must contain a non-empty JSON list of events."
+            "events.json must contain a non-empty JSON list."
         )
 
     if not isinstance(state, dict):
@@ -201,78 +203,99 @@ def main():
             "state.json must contain a JSON object."
         )
 
-    # Select only one event. The remaining events are not queried.
-    event = get_next_event(config)
+    events = get_upcoming_events(config)
 
-    if event is None:
+    if not events:
         print("No upcoming events.")
         return
 
-    # Support both existing URL field names.
-    event_url = event.get("event_url") or event.get("url")
-    if event_url:
-        event["event_url"] = event_url
-
-    for field in (
-        "event_id",
-        "map_id",
-        "event_url",
-        "title",
-        "date",
-    ):
-        if not event.get(field):
-            raise RuntimeError(
-                f"Each event needs a non-empty '{field}': {event}"
-            )
-
-    event_id = str(event["event_id"]).removeprefix("e")
-    title = event["title"]
-    event_date = event["date"]
-
-    # Human-readable key requested for state.json.
-    state_key = f"{event_id}-{title}"
-
-    print(f"Checking next event: {title}")
-    print(f"Event date: {event_date}")
-
-    # Query the seating map for this event only.
-    current = get_booked_count(event)
-
     print(
-        f"{title} (event {event_id}): "
-        f"{current} unavailable/booked seats"
+        f"Monitoring {len(events)} upcoming event(s)."
     )
 
-    # Migrate an old numeric-only key without losing its baseline.
     changed = False
-
-    if state_key not in state and event_id in state:
-        state[state_key] = state.pop(event_id)
-        changed = True
-
-    previous = state.get(state_key)
     alerts = []
 
-    if previous is None:
-        # First observation: save a baseline without sending an alert.
-        state[state_key] = current
-        changed = True
+    for event in events:
+        event_url = event.get("event_url") or event.get("url")
 
-        print(
-            f"Initial baseline saved for event {event_id}; "
-            "no alert sent."
+        required_fields = (
+            "event_id",
+            "map_id",
+            "title",
+            "date",
         )
 
-    else:
-        previous = int(previous)
+        missing = [
+            field
+            for field in required_fields
+            if not event.get(field)
+        ]
+
+        if not event_url:
+            missing.append("event_url")
+
+        if missing:
+            print(
+                f"Skipping invalid event: "
+                f"missing {', '.join(missing)}"
+            )
+            continue
+
+        event_id = str(
+            event["event_id"]
+        ).removeprefix("e")
+
+        title = event["title"]
+        state_key = f"{event_id}-{title}"
+
+        print(f"\nChecking: {title}")
+
+        # Retrieve the current count.
+        try:
+            current = get_booked_count(event)
+        except Exception as exc:
+            print(
+                f"ERROR checking event {event_id}: {exc}",
+                file=sys.stderr,
+            )
+            continue
+
+        print(
+            f"Unavailable seats: {current}"
+        )
+
+        # Migrate an existing numeric-only key.
+        if state_key not in state and event_id in state:
+            state[state_key] = state[event_id]
+            del state[event_id]
+            changed = True
+
+        previous = state.get(state_key)
+
+        if previous is None:
+            # First observation: save baseline without notification.
+            state[state_key] = current
+            changed = True
+
+            print(
+                "Initial baseline saved. No notification sent."
+            )
+
+            continue
+
+        try:
+            previous = int(previous)
+        except (ValueError, TypeError):
+            print(
+                f"Invalid previous count for {state_key}. "
+                "Skipping update to avoid losing the baseline."
+            )
+            continue
 
         if current > previous:
-            increase = current - previous
-
             alerts.append(
-                f"{title}\n"
-                f"Sold:"
-                f"{current}"
+                (state_key, current, previous, title)
             )
 
         if current != previous:
@@ -280,16 +303,36 @@ def main():
             changed = True
 
     # Send notifications before saving state.
-    # If sending fails, the old seat count remains available for retry.
-    for alert in alerts:
-        telegram_send(alert)
-        print("Telegram notification sent.")
+    # Failed notifications retain the old count for retry.
+    failed_notifications = []
+
+    for state_key, current, previous, title in alerts:
+        message = (
+            f"{title}\n"
+            f"Sold:{current}"
+        )
+
+        try:
+            telegram_send(message)
+            print(f"Telegram notification sent: {title}")
+        except Exception as exc:
+            print(
+                f"ERROR sending Telegram notification: {exc}",
+                file=sys.stderr,
+            )
+
+            # Restore the previous value so it can be retried.
+            state[state_key] = previous
+            failed_notifications.append(state_key)
 
     if changed:
         save_state(state)
-        print("State saved to state.json.")
+        print("\nState saved to state.json.")
 
-    print(f"Finished. Alerts sent: {len(alerts)}")
+    print(
+        f"\nFinished. "
+        f"Alerts sent: {len(alerts) - len(failed_notifications)}"
+    )
 
 
 if __name__ == "__main__":
